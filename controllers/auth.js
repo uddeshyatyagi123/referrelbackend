@@ -13,6 +13,7 @@ const multer = require('multer')
 const FormData = require('form-data')
 const axios = require('axios')
 const upload = multer()
+const MongoStore = require('connect-mongo')
 
 // let permanent
 
@@ -26,6 +27,8 @@ app.use(
     session({
        secret: process.env.SESSION_SECRET,
        resave: false,
+       store: MongoStore.create({ 
+        mongoUrl: process.env.MONGO_URL}),
        saveUninitialized: false,
        cookie: {},
     })
