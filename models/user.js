@@ -8,10 +8,21 @@ const studentSchema = new mongoose.Schema({
     max: 20,
     unique: true,
   },
+  name: {
+    type: String,
+    required: true,
+    min: 3,
+    max: 20,
+  },
   email: {
     type: String,
     required: true,
     unique: true,
+    max: 50,
+  }, 
+  degree: {
+    type: String,
+    required: true, 
     max: 50,
   },
   password: {
