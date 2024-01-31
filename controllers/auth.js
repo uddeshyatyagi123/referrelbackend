@@ -24,41 +24,43 @@ dotenv.config()
 
 app.use(
     session({
-       secret: process.env.SESSION_SECRET,
-       resave: false,
-       saveUninitialized: false,
-       cookie: {},
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {},
     })
-  )
+)
 
 const { SMTP_EMAIL, SMTP_PASS } = process.env
 
 let transporter = nodemailer.createTransport({
-  service: 'Gmail',
-  auth: {
-    user: SMTP_EMAIL,
-    pass: SMTP_PASS,
-  },
+    service: 'Gmail',
+    auth: {
+        user: SMTP_EMAIL,
+        pass: SMTP_PASS,
+    },
 })
 
 app.post("/studentlogin", async (req, res) => {
     try {
-        const { username, password,rememberMe } = req.body
+        const { username, password, rememberMe } = req.body
         const user = await User.findOne({ username })
         if (!user)
             return res.json({ msg: "Incorrect Username or Password", status: false })
+        if (password.length < 8)
+            return res.status(400).json({ msg: "Password cant be less than 8 characters" });
         const isPasswordValid = await bcrypt.compare(password, user.password)
         if (!isPasswordValid)
             return res.json({ msg: "Incorrect Username or Password", status: false })
         delete user.password
         const expiresIn = rememberMe ? '7d' : '2h';
-        const token = jwt.sign({ id: user.id, username: user.username },  process.env.TOKEN_KEY, { expiresIn })
+        const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_KEY, { expiresIn })
         res.cookie('jwt', token, {
             secure: true,
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
             httpOnly: true
         })
-        return res.json({msg: 'Login successful',status: true})
+        return res.json({ msg: 'Login successful', status: true })
     } catch (err) {
         console.log(err);
         res.status(500).json({ msg: 'Server error', status: false })
@@ -68,8 +70,8 @@ app.post("/studentlogin", async (req, res) => {
 app.post("/studentregister", async (req, res) => {
     try {
         const { username, email } = req.body
-        if(!username || !email)
-            return res.status(500).json({msg:"Enter the email and username fields correctly"})
+        if (!username || !email)
+            return res.status(500).json({ msg: "Enter the email and username fields correctly" })
         const usernameCheck = await User.findOne({ username })
         if (usernameCheck)
             return res.status(404).json({ error: 'Username already used' })
@@ -81,7 +83,7 @@ app.post("/studentregister", async (req, res) => {
         // return res.status(200).json({ msg: 'Check Mail for further process' })
         const otp = Math.floor(1000 + Math.random() * 9000)
         console.log(otp)
-        req.session.otp=otp
+        req.session.otp = otp
         // permanent = otp
         const mailOptions = {
             from: SMTP_EMAIL,
@@ -125,8 +127,10 @@ app.post("/studentregister", async (req, res) => {
 
 app.post("/studentverify", async (req, res) => {
     const { name, username, email, degree, password, otp } = req.body
-    if(!name||! username||! email||! degree||! password||!otp)
+    if (!name || !username || !email || !degree || !password || !otp)
         return res.status(400).json({ msg: "Fill all the required fields" });
+    if (password.length < 8)
+        return res.status(400).json({ msg: "Password cant be less than 8 characters" });
     if (req.session.otp == otp) {
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await User.create({
@@ -137,20 +141,22 @@ app.post("/studentverify", async (req, res) => {
             password: hashedPassword,
         })
         delete user.password
-        return res.status(200).json({ message: "Registered Successfully", user:{
-            name:user.name,
-            email:user.email,
-            username:user.username,
-            degree:user.degree
-        }})
+        return res.status(200).json({
+            message: "Registered Successfully", user: {
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                degree: user.degree
+            }
+        })
     } else {
-        return res.status(400).json({msg:"Invalid OTP cant register"})
+        return res.status(400).json({ msg: "Invalid OTP cant register" })
     }
 })
 
 app.post("/refreelogin", async (req, res) => {
     try {
-        const { username, password,rememberMe } = req.body
+        const { username, password, rememberMe } = req.body
         const user = await refree.findOne({ username })
         if (!user)
             return res.status(403).json({ msg: "Incorrect Username or Password", status: false })
@@ -159,13 +165,13 @@ app.post("/refreelogin", async (req, res) => {
             return res.status(403).json({ msg: "Incorrect Username or Password", status: false })
         delete user.password
         const expiresIn = rememberMe ? '7d' : '2h';
-        const token = jwt.sign({ id: user.id, username: user.username },  process.env.TOKEN_KEY, { expiresIn })
+        const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_KEY, { expiresIn })
         res.cookie('jwt', token, {
             secure: true,
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
             httpOnly: true
         })
-        return res.json({msg: 'Login successful',status: true})
+        return res.json({ msg: 'Login successful', status: true })
     } catch (err) {
         console.log(err);
         res.status(500).json({ msg: 'Server error', status: false })
@@ -174,7 +180,7 @@ app.post("/refreelogin", async (req, res) => {
 
 app.post("/refreeregister", async (req, res) => {
     try {
-        const {username, email} = req.body
+        const { username, email } = req.body
         const usernameCheck = await refree.findOne({ username })
         if (usernameCheck)
             return res.status(403).json({ error: 'Username already used' })
@@ -186,7 +192,7 @@ app.post("/refreeregister", async (req, res) => {
         // return res.status(200).json({ msg: 'Check Mail for further process' })
         const otp = Math.floor(1000 + Math.random() * 9000)
         console.log(otp)
-        req.session.otp=otp
+        req.session.otp = otp
         // permanent = otp
         const mailOptions = {
             from: SMTP_EMAIL,
@@ -230,9 +236,9 @@ app.post("/refreeregister", async (req, res) => {
 
 app.post("/refreeverify", async (req, res) => {
     const { name, username, email, company, password, otp } = req.body
-    if(!name||!email||!username||!company||!password)
-    return res.status(500).json({ message: "Make sure to enter all the fields correctly"})
-    if (req.session.otp == otp) {
+    if (!name || !email || !username || !company || !password)
+        return res.status(500).json({ message: "Make sure to enter all the fields correctly" })
+    // if (req.session.otp == otp) {
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await refree.create({
             name,
@@ -242,15 +248,17 @@ app.post("/refreeverify", async (req, res) => {
             password: hashedPassword,
         })
         // delete user.password
-        return res.status(200).json({ message: "Registered Successfully", user:{
-            name:user.name,
-            email:user.email,
-            username:user.username,
-            company:user.company
-        } });
-    } else {
-        return res.status(400).json({msg:"Invalid OTP cant register"})
-    }
+        return res.status(200).json({
+            message: "Registered Successfully", user: {
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                company: user.company
+            }
+        });
+    // } else {
+        return res.status(400).json({ msg: "Invalid OTP cant register" })
+    // }
 })
  
 
@@ -258,7 +266,7 @@ app.get("/home", auth, (req, res) => {
     return res.status(200).json({ msg: 'User Logged in and Session is Active' })
 })
 
-app.get("/logout",async(req, res) => {
+app.get("/logout", async (req, res) => {
     try {
         res.clearCookie('jwt')
         return res.status(200).json({ msg: 'User Logged out and session ended' })

@@ -18,7 +18,7 @@ const PORT = app.listen(process.env.PORT, () =>
 )
 
 setInterval(function() {
-    console.log("Render ab nhi");
+    console.log("Render ab nhi soyega");
 }, 2*60*1000)
 
 app.get("/", (req, res) => {
