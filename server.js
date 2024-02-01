@@ -17,9 +17,9 @@ const PORT = app.listen(process.env.PORT, () =>
   console.log(`SERVER UP and running at ${process.env.PORT}`)
 )
 
-setInterval(function() {
-    console.log("Render ab nhi soyega");
-}, 2*60*1000)
+// setInterval(function() {
+//     console.log("Render ab nhi soyega");
+// }, 2*60*1000)
 
 app.get("/", (req, res) => {
   res.status(200).send("Server up and running")

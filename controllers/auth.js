@@ -2,17 +2,18 @@ const dotenv = require('dotenv')
 const jwt = require("jsonwebtoken")
 const auth = require("../middleware/auth")
 const User = require("../models/user")
+const otpsave = require("../models/otp")
 const refree = require("../models/refree")
 const express = require("express")
 const session = require("express-session")
 const cookieParser = require('cookie-parser')
 const bcrypt = require("bcrypt")
 const nodemailer = require('nodemailer')
-const fs = require('fs').promises
+// const fs = require('fs').promises
 const multer = require('multer')
-const FormData = require('form-data')
-const axios = require('axios')
-const upload = multer()
+// const FormData = require('form-data')
+// const axios = require('axios')
+// const upload = multer()
 
 // let permanent
 
@@ -83,7 +84,11 @@ app.post("/studentregister", async (req, res) => {
         // return res.status(200).json({ msg: 'Check Mail for further process' })
         const otp = Math.floor(1000 + Math.random() * 9000)
         console.log(otp)
-        req.session.otp = otp
+        const user = await otpsave.create({
+            email,
+            otp
+        })
+        // req.session.otp = otp
         // permanent = otp
         const mailOptions = {
             from: SMTP_EMAIL,
@@ -131,7 +136,11 @@ app.post("/studentverify", async (req, res) => {
         return res.status(400).json({ msg: "Fill all the required fields" });
     if (password.length < 8)
         return res.status(400).json({ msg: "Password cant be less than 8 characters" });
-    if (req.session.otp == otp) {
+    const user = await otpsave.findOne({ email })
+    // console.log(user)
+    // console.log(user.otp)
+    // console.log(user.email)
+    if (user.otp == otp) {
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await User.create({
             name,
@@ -140,7 +149,8 @@ app.post("/studentverify", async (req, res) => {
             degree,
             password: hashedPassword,
         })
-        delete user.password
+
+        await otpsave.deleteOne({ email })
         return res.status(200).json({
             message: "Registered Successfully", user: {
                 name: user.name,
@@ -192,7 +202,12 @@ app.post("/refreeregister", async (req, res) => {
         // return res.status(200).json({ msg: 'Check Mail for further process' })
         const otp = Math.floor(1000 + Math.random() * 9000)
         console.log(otp)
-        req.session.otp = otp
+        // req.session.otp = otp
+        console.log(otp)
+        const user = await otpsave.create({
+            email,
+            otp
+        })
         // permanent = otp
         const mailOptions = {
             from: SMTP_EMAIL,
@@ -238,7 +253,11 @@ app.post("/refreeverify", async (req, res) => {
     const { name, username, email, company, password, otp } = req.body
     if (!name || !email || !username || !company || !password)
         return res.status(500).json({ message: "Make sure to enter all the fields correctly" })
-    // if (req.session.otp == otp) {
+    const user = await otpsave.findOne({ email })
+    // console.log(user)
+    // console.log(user.otp)
+    // console.log(user.email)
+    if (user.otp == otp) {
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await refree.create({
             name,
@@ -248,6 +267,7 @@ app.post("/refreeverify", async (req, res) => {
             password: hashedPassword,
         })
         // delete user.password
+        await otpsave.deleteOne({ email })
         return res.status(200).json({
             message: "Registered Successfully", user: {
                 name: user.name,
@@ -256,11 +276,11 @@ app.post("/refreeverify", async (req, res) => {
                 company: user.company
             }
         });
-    // } else {
+    } else {
         return res.status(400).json({ msg: "Invalid OTP cant register" })
-    // }
+    }
 })
- 
+
 
 app.get("/home", auth, (req, res) => {
     return res.status(200).json({ msg: 'User Logged in and Session is Active' })
