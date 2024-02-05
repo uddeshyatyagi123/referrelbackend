@@ -165,7 +165,7 @@ app.post("/studentverify", async (req, res) => {
     }
 })
 
-app.post("/refreelogin", async (req, res) => {
+app.post("/referrerlogin", async (req, res) => {
     try {
         const { username, password, rememberMe } = req.body
         const user = await refree.findOne({ username })
@@ -189,7 +189,7 @@ app.post("/refreelogin", async (req, res) => {
     }
 })
 
-app.post("/refreeregister", async (req, res) => {
+app.post("/referrerregister", async (req, res) => {
     try {
         const { username, email } = req.body
         const usernameCheck = await refree.findOne({ username })
@@ -202,7 +202,7 @@ app.post("/refreeregister", async (req, res) => {
         // await otp(otpreq,res)
         // return res.status(200).json({ msg: 'Check Mail for further process' })
         const otp = Math.floor(1000 + Math.random() * 9000)
-        console.log(otp)
+        // console.log(otp)
         // req.session.otp = otp
         console.log(otp)
         const user = await otpsave.create({
@@ -250,7 +250,7 @@ app.post("/refreeregister", async (req, res) => {
     }
 })
 
-app.post("/refreeverify", async (req, res) => {
+app.post("/referrerverify", async (req, res) => {
     const { name, username, email, company, password, otp } = req.body
     if (!name || !email || !username || !company || !password)
         return res.status(500).json({ message: "Make sure to enter all the fields correctly" })
@@ -316,18 +316,13 @@ app.get("/referrals", async (req, res) => {
 
 app.post("/referrals", async (req, res) => {
     try {
-        const {email,username}=req.body
-        let x;
-        if(!email)
-        x=username;
-        else
-        x=email;
-        const data=await referrals.findOne({posted_by:x})
+        const {username}=req.body
+        const data=await referrals.findOne({posted_by:username})
         if(data.length==0)
         return res.status(400).json({ message: "No referrals found for this user" })
         return res.status(200).json({
             message: 'Here is list of all posted referrals of',
-            user:x,
+            user:username,
             data })
     } catch (error) {
         return res.status(400).json({ message: "Error occured while fetching the referrals" })
