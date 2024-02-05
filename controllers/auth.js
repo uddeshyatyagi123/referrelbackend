@@ -317,7 +317,8 @@ app.get("/referrals", async (req, res) => {
 app.post("/referrals", async (req, res) => {
     try {
         const {username}=req.body
-        const data=await referrals.findOne({posted_by:username})
+        const data=await referrals.find({posted_by:username})
+        console.log(data)
         if(data.length==0)
         return res.status(400).json({ message: "No referrals found for this user" })
         return res.status(200).json({
