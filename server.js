@@ -3,11 +3,15 @@ const dotenv = require('dotenv')
 const cors = require('cors')
 const connectDB = require('./config/db')
 const auth = require("./routes/admin")
+const cookieParser = require('cookie-parser')
+
+
 dotenv.config({ path: './config/.env' })
 connectDB()
 
 const app = express()
 app.use(cors());
+app.use(cookieParser())
 app.use(express.json());
 
 

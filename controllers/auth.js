@@ -11,6 +11,7 @@ const bcrypt = require("bcrypt")
 const nodemailer = require('nodemailer')
 // const fs = require('fs').promises
 const multer = require('multer')
+const referrals = require('../models/referrals')
 // const FormData = require('form-data')
 // const axios = require('axios')
 // const upload = multer()
@@ -278,6 +279,58 @@ app.post("/refreeverify", async (req, res) => {
         });
     } else {
         return res.status(400).json({ msg: "Invalid OTP cant register" })
+    }
+})
+
+
+app.post("/addreferral", async (req, res) => {
+    try {
+        const existingData = await referrals.findOne(req.body)
+        // console.log(existingData)
+        if (existingData)
+            return res.status(400).json({ message: 'Cant add this data as it already exists' });
+        const { posted_by, company_name, description, qualifications, salary } = req.body
+        if (!posted_by || !company_name || !description || !qualifications || !salary)
+            return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
+        const user = await referrals.create({
+            posted_by,
+            company_name,
+            description,
+            qualifications,
+            salary
+        })
+        return res.status(200).json({ message: "Added successfully" })
+    } catch (error) {
+        return res.status(400).json({ message: "Error occured while adding the referral" })
+    }
+})
+
+app.get("/referrals", async (req, res) => {
+    try {
+        const data=await referrals.find({})
+        return res.status(200).json({ message: "Here's list of all posted referrals", data })
+    } catch (error) {
+        return res.status(400).json({ message: "Error occured while fetching the referrals" })
+    }
+})
+
+app.post("/referrals", async (req, res) => {
+    try {
+        const {email,username}=req.body
+        let x;
+        if(!email)
+        x=username;
+        else
+        x=email;
+        const data=await referrals.findOne({posted_by:x})
+        if(data.length==0)
+        return res.status(400).json({ message: "No referrals found for this user" })
+        return res.status(200).json({
+            message: 'Here is list of all posted referrals of',
+            user:x,
+            data })
+    } catch (error) {
+        return res.status(400).json({ message: "Error occured while fetching the referrals" })
     }
 })
 
