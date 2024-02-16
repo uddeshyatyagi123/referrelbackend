@@ -1,9 +1,12 @@
 const mongoose = require("mongoose")
 
 const referralSchema = new mongoose.Schema({
-    posted_by: {
+    asked_by: {
         type: String,
-        unique:true,
+        required: true,
+    },
+    asked_to: {
+        type: String,
         required: true,
     },
     company_name: {
@@ -21,6 +24,18 @@ const referralSchema = new mongoose.Schema({
     price: {
         type: String,
         required: true,
+    },
+    resume:{
+        type:String,
+        default:""
+    },
+    proof:{
+        type:String,
+        default:""
+    },
+    status:{
+        type:Boolean,
+        default:false
     }
 })
-module.exports = mongoose.model("Referral", referralSchema)
+module.exports = mongoose.model("Referral request", referralSchema)

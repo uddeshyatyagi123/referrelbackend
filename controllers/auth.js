@@ -12,6 +12,9 @@ const nodemailer = require('nodemailer')
 // const fs = require('fs').promises
 const multer = require('multer')
 const referrals = require('../models/referrals')
+const askreferrals = require('../models/referralrequests')
+const cloudinary = require("../config/cloudinary")
+const upload = require("../middleware/multer")
 // const FormData = require('form-data')
 // const axios = require('axios')
 // const upload = multer()
@@ -224,7 +227,7 @@ app.post("/referrerregister", async (req, res) => {
             <hr style="border: 1px solid #ccc; margin: 20px 0;">
             <h4 style="font-size: 20px; color: #333;">Hi there,</h4>
             <p style="font-size: 16px; color: #333; margin: 20px 0;">Here is the otp to confirm your mail ${otp}</p>
-            <p style="font-size: 16px; color: #333;">We are happy to have you as a refree of our site.</p>
+            <p style="font-size: 16px; color: #333;">We are happy to have you as a referrer of our site.</p>
                         <div style="font-size: 16px; color: #333; margin-top: 20px; text-align: center;">
                         <h5 style="font-size: 18px;">Best Regards</h5>
                         <h5 style="font-size: 18px;">Referral Site</h5>
@@ -285,19 +288,19 @@ app.post("/referrerverify", async (req, res) => {
 
 app.post("/addreferral", async (req, res) => {
     try {
-        const existingData = await referrals.findOne(req.body)
+        const existingData = await referrals.findOne({posted_by:req.body.posted_by})
         // console.log(existingData)
         if (existingData)
-            return res.status(400).json({ message: 'Cant add this data as it already exists' });
-        const { posted_by, company_name, description, qualifications, salary } = req.body
-        if (!posted_by || !company_name || !description || !qualifications || !salary)
+            return res.status(400).json({ message: 'Cant add this data as this user has already posted a job' });
+        const { posted_by, company_name, description, qualifications, price } = req.body
+        if (!posted_by || !company_name || !description || !qualifications || !price)
             return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
         const user = await referrals.create({
             posted_by,
             company_name,
             description,
             qualifications,
-            salary
+            price
         })
         return res.status(200).json({ message: "Added successfully" })
     } catch (error) {
@@ -307,7 +310,7 @@ app.post("/addreferral", async (req, res) => {
 
 app.get("/referrals", async (req, res) => {
     try {
-        const data=await referrals.find({})
+        const data = await referrals.find({})
         return res.status(200).json({ message: "Here's list of all posted referrals", data })
     } catch (error) {
         return res.status(400).json({ message: "Error occured while fetching the referrals" })
@@ -316,15 +319,16 @@ app.get("/referrals", async (req, res) => {
 
 app.post("/referrals", async (req, res) => {
     try {
-        const {username}=req.body
-        const data=await referrals.find({posted_by:username})
+        const { username } = req.body
+        const data = await referrals.find({ posted_by: username })
         console.log(data)
-        if(data.length==0)
-        return res.status(400).json({ message: "No referrals found for this user" })
+        if (data.length == 0)
+            return res.status(400).json({ message: "No referrals found for this user" })
         return res.status(200).json({
             message: 'Here is list of all posted referrals of',
-            user:username,
-            data })
+            user: username,
+            data
+        })
     } catch (error) {
         return res.status(400).json({ message: "Error occured while fetching the referrals" })
     }
@@ -344,11 +348,89 @@ app.get("/logout", async (req, res) => {
     }
 })
 
+app.post('/askreferral', async (req, res) => {
+    try {
+        const { asked_by, asked_to, company_name, resume, description, qualifications, price } = req.body
+        const existingData = await askreferrals.findOne({ asked_to: asked_to,asked_by: asked_by })
+        // console.log(existingData)
+        if (existingData)
+            return res.status(400).json({ message: 'Cant ask referral for same job or referrer twice' });
+        if (!asked_by || !asked_to || !company_name || !resume || !description || !qualifications || !price)
+            return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
+        const user = await askreferrals.create({
+            asked_by,
+            asked_to,
+            company_name,
+            description,
+            resume,
+            qualifications,
+            price
+        })
+        return res.status(200).json({ message: "Added successfully" })
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json({ message: "Error occured while adding the referral" })
+    }
+})
 
 
+app.post('/myreferrals', async (req, res) => {
+    try {
+        const { asked_to } = req.body
+        if (!asked_to)
+            return res.status(400).json({ msg: "need a username to fetch data" })
+        const data = await askreferrals.find({ asked_to: asked_to })
+        return res.status(200).json(data)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json({ msg: "Cant fetch data" })
+    }
+})
+app.post('/appliedreferrals', async (req, res) => {
+    try {
+        const { asked_by } = req.body
+        if (!asked_by)
+            return res.status(400).json({ msg: "need a username to fetch data" })
+        const data = await askreferrals.find({ asked_by: asked_by })
+        return res.status(200).json(data)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json({ msg: "Cant fetch data" })
+    }
+})
 
+app.post('/accept', async (req, res) => {
+    try {
+        const { asked_to,asked_by,proof } = req.body
+        if (!asked_to||!asked_by||!proof)
+        return res.status(400).json({ msg: "need both the username to fetch data and image link" })
+    const data = await askreferrals.findOne({ asked_to: asked_to , asked_by: asked_by })
+    data.status=true
+    data.proof=proof
+    data.save()
+    return res.status(400).json({ msg: "Referral accepted successfully",info:data })
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json({ msg: "Cant fetch data" })
+    }
+})
 
-
+app.post('/upload',async(req,res)=>{
+    upload.single('image')(req, res, function (err) {
+        if (err) {
+            console.log(err)
+            return res.status(200).send("Error occured while uploading")
+        }
+        cloudinary.uploader.upload(req.file.path, function (err, result) {
+            if (err) {
+                console.log(err)
+                return res.status(500).send("Error occured with cloudinary")
+            }
+            return res.status(200).json({ msg: "Uploaded successfully", imageUrl: result.url })
+        })
+    }
+)})
+    
 
 
 module.exports = app;
