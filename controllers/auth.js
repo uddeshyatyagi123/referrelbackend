@@ -373,15 +373,16 @@ app.post('/askreferral', async (req, res) => {
             return res.status(400).json({ message: 'Cant ask referral for same job or referrer twice' });
         if (!asked_by || !asked_to || !company_name || !resume || !description || !qualifications || !price)
             return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
-        const exists = await User.findOne({ username: asked_by })
+        const userdata = await User.findOne({ username: asked_by })
+        const refdata = await referrals.findOne({ posted_by: asked_to })
         const user = await askreferrals.create({
             asked_by,
             asked_to,
-            company_name,
-            description,
-            resume:exists.resume,
-            qualifications,
-            price
+            company_name:refdata.company_name,
+            description:refdata.description,
+            resume:userdata.resume,
+            qualifications:refdata.qualifications,
+            price:refdata.price
         })
         return res.status(200).json({ message: "Added successfully" })
     } catch (error) {
