@@ -29,6 +29,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true,
     min: 8,
+  },
+  resume:{
+    type:String,
+    default:""
   }
 })
 module.exports = mongoose.model("Student", studentSchema)

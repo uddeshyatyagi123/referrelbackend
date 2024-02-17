@@ -168,6 +168,22 @@ app.post("/studentverify", async (req, res) => {
     }
 })
 
+app.post("/uploadresume", async (req, res) => {
+    try {
+        const { username, resumelink } = req.body
+        if (!username || !resumelink)
+            return res.status(400).json({ msg: "Username of student and resume link is required" });
+        const exists = await User.findOne({ username: username })
+        exists.resume = resumelink
+        exists.save()
+        return res.status(200).json({ msg: "Updated successfully" })
+    }
+    catch (error) {
+        return res.status(400).json({ msg: "Failed to upload data" })
+
+    }
+})
+
 app.post("/referrerlogin", async (req, res) => {
     try {
         const { username, password, rememberMe } = req.body
@@ -288,7 +304,7 @@ app.post("/referrerverify", async (req, res) => {
 
 app.post("/addreferral", async (req, res) => {
     try {
-        const existingData = await referrals.findOne({posted_by:req.body.posted_by})
+        const existingData = await referrals.findOne({ posted_by: req.body.posted_by })
         // console.log(existingData)
         if (existingData)
             return res.status(400).json({ message: 'Cant add this data as this user has already posted a job' });
@@ -350,19 +366,20 @@ app.get("/logout", async (req, res) => {
 
 app.post('/askreferral', async (req, res) => {
     try {
-        const { asked_by, asked_to, company_name, resume, description, qualifications, price } = req.body
-        const existingData = await askreferrals.findOne({ asked_to: asked_to,asked_by: asked_by })
+        const { asked_by, asked_to, company_name, description, qualifications, price } = req.body
+        const existingData = await askreferrals.findOne({ asked_to: asked_to, asked_by: asked_by })
         // console.log(existingData)
         if (existingData)
             return res.status(400).json({ message: 'Cant ask referral for same job or referrer twice' });
         if (!asked_by || !asked_to || !company_name || !resume || !description || !qualifications || !price)
             return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
+        const exists = await User.findOne({ username: username })
         const user = await askreferrals.create({
             asked_by,
             asked_to,
             company_name,
             description,
-            resume,
+            resume:exists.resume,
             qualifications,
             price
         })
@@ -401,21 +418,21 @@ app.post('/appliedreferrals', async (req, res) => {
 
 app.post('/accept', async (req, res) => {
     try {
-        const { asked_to,asked_by,proof } = req.body
-        if (!asked_to||!asked_by||!proof)
-        return res.status(400).json({ msg: "need both the username to fetch data and image link" })
-    const data = await askreferrals.findOne({ asked_to: asked_to , asked_by: asked_by })
-    data.status=true
-    data.proof=proof
-    data.save()
-    return res.status(400).json({ msg: "Referral accepted successfully",info:data })
+        const { asked_to, asked_by, proof } = req.body
+        if (!asked_to || !asked_by || !proof)
+            return res.status(400).json({ msg: "need both the username to fetch data and image link" })
+        const data = await askreferrals.findOne({ asked_to: asked_to, asked_by: asked_by })
+        data.status = true
+        data.proof = proof
+        data.save()
+        return res.status(400).json({ msg: "Referral accepted successfully", info: data })
     } catch (error) {
         console.error(error)
         return res.status(400).json({ msg: "Cant fetch data" })
     }
 })
 
-app.post('/upload',async(req,res)=>{
+app.post('/upload', async (req, res) => {
     upload.single('image')(req, res, function (err) {
         if (err) {
             console.log(err)
@@ -429,8 +446,9 @@ app.post('/upload',async(req,res)=>{
             return res.status(200).json({ msg: "Uploaded successfully", imageUrl: result.url })
         })
     }
-)})
-    
+    )
+})
+
 
 
 module.exports = app;
