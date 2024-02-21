@@ -11,8 +11,8 @@ connectDB()
 
 const app = express()
 app.use(cors({
-  origin:'http://localhost:5173',
-  credentials:true
+  origin: ['http://localhost:3000', 'http://localhost:5173',],
+  credentials: true
 }))
 app.use(cookieParser())
 app.use(express.json());
