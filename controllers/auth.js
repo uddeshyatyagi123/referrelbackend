@@ -68,8 +68,8 @@ app.post("/studentlogin", async (req, res) => {
         // return res.json({ msg: 'Login successful', status: true })
         return res.status(200).cookie('jwt', token, {
             httpOnly: false,
-            // secure: true,
-            // sameSite: "none",
+            secure: true,
+            sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
         }).json({ msg: 'Login successful', status: true })
     } catch (err) {
@@ -203,9 +203,10 @@ app.post("/referrerlogin", async (req, res) => {
         const expiresIn = rememberMe ? '7d' : '2h';
         const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_KEY, { expiresIn })
         return res.status(200).cookie('jwt', token, {
+            httpOnly: false,
             secure: true,
+            sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
-            httpOnly: true
         }).json({ msg: 'Login successful', status: true })
         // res.cookie('jwt', token, {
         //     secure: true,
