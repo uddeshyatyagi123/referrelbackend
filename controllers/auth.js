@@ -174,17 +174,23 @@ app.post("/studentverify", async (req, res) => {
     }
 })
 
-app.post("/uploadresume", async (req, res) => {
+app.patch("/profile", async (req, res) => {
     try {
-        const { username, resumelink } = req.body
-        if (!username || !resumelink)
-            return res.status(400).json({ msg: "Username of student and resume link is required" });
+        const { username, name,degree,resumelink } = req.body
+        if (!username )
+            return res.status(400).json({ msg: "Username of student is required" });
         const exists = await User.findOne({ username: username })
-        exists.resume = resumelink
-        exists.save()
+        if(name)
+        exists.name=name.length === 0 ? undefined : name
+        if(degree)
+        exists.degree=degree.length === 0 ? undefined : degree
+        if(resumelink)
+        exists.resume=resumelink.length === 0 ? undefined : resumelink
+        await exists.save()
         return res.status(200).json({ msg: "Updated successfully" })
     }
     catch (error) {
+        console.error(error)
         return res.status(400).json({ msg: "Failed to upload data" })
 
     }
@@ -386,7 +392,13 @@ app.post('/askreferral', async (req, res) => {
         if (!asked_by || !asked_to)
             return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
         const userdata = await User.findOne({ username: asked_by })
+        if(!userdata)
+        return res.status(404).json({ message: "No userdata found for this user" })
+        if(userdata.resume.length==0)
+        return res.status(400).json({ message: "First upload resume link to request referral" })
         const refdata = await referrals.findOne({ posted_by: asked_to })
+        if(!refdata)
+        return res.status(404).json({ message: "No referrals found that were posted by this user" })
         const user = await askreferrals.create({
             asked_by,
             asked_to,
@@ -396,7 +408,7 @@ app.post('/askreferral', async (req, res) => {
             qualifications:refdata.qualifications,
             price:refdata.price
         })
-        return res.status(200).json({ message: "Added successfully" })
+        return res.status(200).json({ message: "Referral requested successfully" })
     } catch (error) {
         console.error(error)
         return res.status(400).json({ message: "Error occured while adding the referral" })
