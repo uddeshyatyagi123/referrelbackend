@@ -378,12 +378,12 @@ app.get("/logout", async (req, res) => {
 
 app.post('/askreferral', async (req, res) => {
     try {
-        const { asked_by, asked_to, company_name, description, qualifications, price } = req.body
+        const { asked_by, asked_to} = req.body
         const existingData = await askreferrals.findOne({ asked_to: asked_to, asked_by: asked_by })
         // console.log(existingData)
         if (existingData)
             return res.status(400).json({ message: 'Cant ask referral for same job or referrer twice' });
-        if (!asked_by || !asked_to || !company_name || !resume || !description || !qualifications || !price)
+        if (!asked_by || !asked_to)
             return res.status(500).json({ message: "Make sure to enter all the fields correctly as all the fields are mandatory" })
         const userdata = await User.findOne({ username: asked_by })
         const refdata = await referrals.findOne({ posted_by: asked_to })
