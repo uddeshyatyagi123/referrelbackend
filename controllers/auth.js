@@ -355,10 +355,10 @@ app.post("/referrals", async (req, res) => {
     try {
         const { current_user } = req.body
         const asked = await askreferrals.find({ asked_by: current_user })
-        const askedToValues = asked.map(a => a.asked_to)
+        const askedToValues = asked.map(a => a.asked_to) //basically i extracted all the asked_to values from asked(jisme apply kia usme se jisko apply kia wo) and later searched only those  by using $nin kind of NotINcluded thing
         const all = await referrals.find({ posted_by: { $nin: askedToValues } })
-        console.log(asked)
-        // console.log(all)
+        // console.log(asked)
+        console.log(askedToValues)
         if (all.length == 0)
             return res.status(400).json({ message: "No referrals found for this user" })
         return res.status(200).json({
