@@ -63,7 +63,7 @@ app.post("/studentlogin", async (req, res) => {
         return res.cookie('jwt', token, {
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
         }).status(200).json({ msg: 'Login successful', status: true })
     } catch (err) {
