@@ -60,16 +60,10 @@ app.post("/studentlogin", async (req, res) => {
         delete user.password
         const expiresIn = rememberMe ? '7d' : '2h';
         const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_KEY, { expiresIn })
-        // res.cookie('jwt', token, {
-        //     secure: true,
-        //     maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
-        //     httpOnly: true
-        // })
-        // return res.json({ msg: 'Login successful', status: true })
         return res.cookie('jwt', token, {
             httpOnly: true,
             secure: true,
-            sameSite: 'None',
+            sameSite: 'strict',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
         }).status(200).json({ msg: 'Login successful', status: true })
     } catch (err) {
@@ -214,12 +208,6 @@ app.post("/referrerlogin", async (req, res) => {
             sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
         }).status(200).json({ msg: 'Login successful', status: true })
-        // res.cookie('jwt', token, {
-        //     secure: true,
-        //     maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
-        //     httpOnly: true
-        // })
-        // return res.json({ msg: 'Login successful', status: true })
     } catch (err) {
         console.log(err);
         res.status(500).json({ msg: 'Server error', status: false })
@@ -376,7 +364,7 @@ app.get("/home", auth, (req, res) => {
 
 app.get("/logout", async (req, res) => {
     try {
-        return res.cookie('auth', '', {
+        return res.cookie('jwt', '', {
             httpOnly: true,
             maxAge: 0
         }).status(200).json({ msg: 'User Logged out and session ended' })
