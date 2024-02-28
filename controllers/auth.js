@@ -66,12 +66,12 @@ app.post("/studentlogin", async (req, res) => {
         //     httpOnly: true
         // })
         // return res.json({ msg: 'Login successful', status: true })
-        return res.status(200).cookie('jwt', token, {
-            httpOnly: false,
-            secure: true,
-            sameSite: 'None',
+        return res.cookie('jwt', token, {
+            httpOnly: true,
+            // secure: true,
+            // sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
-        }).json({ msg: 'Login successful', status: true })
+        }).status(200).json({ msg: 'Login successful', status: true })
     } catch (err) {
         console.log(err);
         res.status(500).json({ msg: 'Server error', status: false })
@@ -208,12 +208,12 @@ app.post("/referrerlogin", async (req, res) => {
         delete user.password
         const expiresIn = rememberMe ? '7d' : '2h';
         const token = jwt.sign({ id: user.id, username: user.username }, process.env.TOKEN_KEY, { expiresIn })
-        return res.status(200).cookie('jwt', token, {
-            httpOnly: false,
-            secure: true,
-            sameSite: 'None',
+        return res.cookie('jwt', token, {
+            httpOnly: true,
+            // secure: true,
+            // sameSite: 'None',
             maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
-        }).json({ msg: 'Login successful', status: true })
+        }).status(200).json({ msg: 'Login successful', status: true })
         // res.cookie('jwt', token, {
         //     secure: true,
         //     maxAge: expiresIn === '7d' ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000,
@@ -353,15 +353,16 @@ app.get("/referrals", async (req, res) => {
 
 app.post("/referrals", async (req, res) => {
     try {
-        const { username } = req.body
-        const data = await referrals.find({ posted_by: username })
-        console.log(data)
-        if (data.length == 0)
+        const { current_user } = req.body
+        const asked = await askreferrals.find({ asked_by: current_user })
+        const askedToValues = asked.map(a => a.asked_to)
+        const all = await referrals.find({ posted_by: { $nin: askedToValues } })
+        console.log(asked)
+        // console.log(all)
+        if (all.length == 0)
             return res.status(400).json({ message: "No referrals found for this user" })
         return res.status(200).json({
-            message: 'Here is list of all posted referrals of',
-            user: username,
-            data
+            all
         })
     } catch (error) {
         return res.status(400).json({ message: "Error occured while fetching the referrals" })
@@ -375,8 +376,10 @@ app.get("/home", auth, (req, res) => {
 
 app.get("/logout", async (req, res) => {
     try {
-        res.clearCookie('jwt')
-        return res.status(200).json({ msg: 'User Logged out and session ended' })
+        return res.cookie('auth', '', {
+            httpOnly: true,
+            maxAge: 0
+        }).status(200).json({ msg: 'User Logged out and session ended' })
     } catch (ex) {
         return res.status(400).json({ msg: 'Failed request' })
     }

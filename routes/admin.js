@@ -29,7 +29,7 @@ router.patch('/profile',auth,profile)
 
 router.post('/addreferral',auth,addreferral)
 router.get('/referrals',auth,referrals)
-router.post('/referrals',auth,referrals)
+router.post('/referrals',referrals)
 
 router.get('/logout',auth,logout)
 router.post('/upload',auth,upload)
